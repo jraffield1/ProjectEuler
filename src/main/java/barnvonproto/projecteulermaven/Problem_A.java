@@ -5,6 +5,7 @@ import com.mxgraph.layout.*;
 import com.mxgraph.util.mxCellRenderer;
 import com.mxgraph.util.mxConstants;
 import java.awt.Color;
+import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
@@ -794,6 +795,51 @@ public class Problem_A
         System.out.println(sum);
     }
 
+    public static void problem_30()
+    {
+        int total = 0;
+        
+        for(int n = 100; n < 1000000; n++)
+        {
+            int sum = 0;
+            
+            String s = ""+n;
+            
+            for(char c : s.toCharArray())
+            {
+                int k = Character.getNumericValue(c);
+                
+                sum += Math.pow(k, 5);
+                
+                if(sum > n)
+                    break;
+            }
+            
+            if(sum == n)
+            {
+                total += n;
+                System.out.println(n);
+            }
+        }
+        
+        System.out.println("Sum: " + total);
+    }
+    
+    public static void problem_34()
+    {
+        System.out.println(Helper.isCurious(145));
+        
+        long sum = 0;
+        
+        for(int i = 3; i < 1000000; i++)
+        {
+            if(Helper.isCurious(i))
+                sum += i;
+        }
+        
+        System.out.println(sum);
+    }
+      
     public static void problem_36()
     {
         int sum = 0;
@@ -1280,6 +1326,35 @@ public class Problem_A
         }
     }
     
+    public static void problem_101()
+    {
+        PolySequence seq = new PolySequence(new double[]{1, -1, 1, -1, 1, -1, 1, -1, 1, -1, 1});
+        
+        long sum = 0;
+        
+        for(int k = 1; k <= 9; k++)
+        {
+            double[] x = new double[k];
+            double[] y = new double[k];
+
+            for(int n = 0; n < k; n++)
+            {
+                x[n] = n+1;
+                y[n] = seq.val(n+1);
+            }
+
+            double[] coeffs = Helper.polyFitter(x, y, k-1);
+
+            PolySequence seq2 = new PolySequence(coeffs);
+
+            long p2 = Math.round(seq2.val(k+1));
+
+            sum += p2;
+        }
+        
+        System.out.println(sum);
+    }
+    
     public static void problem_107()
     {
         int N = 40;
@@ -1387,8 +1462,105 @@ public class Problem_A
         }
     }
     
-    public static void main(String[] args)
+    public static void problem_144() throws IOException
     {
-        problem_44();
+        int w = 1000;
+        int h = 1000;
+        BufferedImage bi = new BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g = (Graphics2D)bi.getGraphics();
+        
+        g.setColor(Color.WHITE);
+        g.fillRect(0, 0, w, h);
+        
+        double A = 5.0;
+        double B = 10.0;
+        EllipseMirror mirror = new EllipseMirror(A, B);
+        mirror.draw_scale = 45.0;
+        mirror.draw_x_offset = w/2;
+        mirror.draw_y_offset = h/2;
+        
+        g.setColor(Color.BLACK);
+        mirror.drawBoundary(g, 400);
+
+        Vector2D r0 = new Vector2D(0.0, 10.1);
+        Vector2D r1 = new Vector2D(1.4, -9.6);
+        mirror.drawLine(g, r0, r1);
+        
+        int N = 100000;
+
+        for(int n = 1; n < N; n++)
+        {
+            if(n%10000 == 0)
+                System.out.println(n);
+            
+            Vector2D r2 = mirror.getNextPoint(r0, r1);
+            
+            if(Math.abs(r2.x) <= 0.01 && r2.y > 0)
+            {
+                System.out.println("FOUND: " + n);
+                break;
+            }
+            
+            mirror.drawLine(g, r1, r2);
+            r0 = r1;
+            r1 = r2;
+        }
+
+        ImageIO.write(bi, "PNG", new File("problem_144.png"));
+    }
+    
+    public static void problem_144b()
+    {
+        int result = 0;
+ 
+        double xA = 0.0;
+        double yA = 10.1;
+
+        double xO = 1.4;
+        double yO = -9.6;
+
+        
+        
+        while(xO > 0.01 || xO < -0.01 || yO < 0){
+
+            //Calculate the slope of A
+            double slopeA = (yO - yA) / (xO - xA);
+
+            //Calculate the slope of the ellipse tangent
+            double slopeO = -4*xO/yO;
+
+            //Calculate the slope of B
+            double tanA = (slopeA - slopeO)/(1+slopeA*slopeO);
+            double slopeB = (slopeO- tanA)/ (1+ tanA*slopeO);
+
+            //calculate intercept of line B
+            double interceptB = yO - slopeB * xO;
+
+            //solve the quadratic equation for finding
+            // the intersection of B and the ellipse
+            // a*x^2 + b*x + c = 0
+            double a = 4 + slopeB*slopeB;
+            double b = 2 * slopeB * interceptB;
+            double c = interceptB * interceptB - 100;
+
+            double ans1 = (-b + Math.sqrt(b * b - 4 * a * c)) / (2 * a);
+            double ans2 = (-b - Math.sqrt(b * b - 4 * a * c)) / (2 * a);
+
+            xA = xO;
+            yA = yO;
+
+            //Take the solution which is furtherst from x0
+            xO = (Math.abs(ans1 - xO) > Math.abs(ans2 - xO)) ? ans1 : ans2;
+            yO = slopeB * xO + interceptB;
+
+            result++;
+        }
+
+        System.out.println(result);
+    }
+    
+    public static void main(String[] args) throws IOException
+    {
+        problem_101();
     }
 }
